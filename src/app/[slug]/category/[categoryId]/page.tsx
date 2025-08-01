@@ -8,6 +8,7 @@ import { ArrowLeft, ShoppingCart, Check } from 'lucide-react';
 import { getProducts, getWebsiteSettings } from '@/services/api';
 import type { Product, ProductsResponse, WebsiteSettingsResponse } from '@/types';
 import { useCart } from '@/contexts/CartContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // Dynamic imports to prevent hydration issues
 const Navbar = dynamic(() => import('@/components/Navbar'), { ssr: false });
@@ -19,6 +20,7 @@ export default function CategoryProductsPage() {
   const slug = params.slug as string;
   const categoryId = params.categoryId as string;
   const { addToCart } = useCart();
+  const { t, getTranslation, isRTL, selectedLanguage } = useLanguage();
   
   const [products, setProducts] = useState<Product[]>([]);
   const [websiteSettings, setWebsiteSettings] = useState<WebsiteSettingsResponse | null>(null);
@@ -89,32 +91,32 @@ export default function CategoryProductsPage() {
     return null;
   };
 
-  // Helper function to get product name (prefer English, fallback to first available)
+  // Helper function to get product name using language context
   const getProductName = (product: Product): string => {
     if (!product.translations || product.translations.length === 0) {
       return 'Unnamed Product';
     }
     
-    // Try to find English translation (languageCode: 1)
-    const englishTranslation = product.translations.find(t => t.languageCode === 1);
-    if (englishTranslation) {
-      return englishTranslation.name;
+    // Try to find translation for selected language (1 for English, 2 for Arabic)
+    const translation = product.translations.find(t => t.languageCode === selectedLanguage);
+    if (translation) {
+      return translation.name;
     }
     
     // Fallback to first available translation
     return product.translations[0].name;
   };
 
-  // Helper function to get product description
+  // Helper function to get product description using language context
   const getProductDescription = (product: Product): string => {
     if (!product.translations || product.translations.length === 0) {
       return '';
     }
     
-    // Try to find English translation (languageCode: 1)
-    const englishTranslation = product.translations.find(t => t.languageCode === 1);
-    if (englishTranslation) {
-      return englishTranslation.description;
+    // Try to find translation for selected language (1 for English, 2 for Arabic)
+    const translation = product.translations.find(t => t.languageCode === selectedLanguage);
+    if (translation) {
+      return translation.description;
     }
     
     // Fallback to first available translation
@@ -123,26 +125,16 @@ export default function CategoryProductsPage() {
 
   // Handle add to cart with notification
   const handleAddToCart = (product: Product) => {
-    const quantityAdded = addToCart(product, 1);
+    addToCart(product, 1);
     
-    // Show notification with actual quantity added
-    let message = '';
-    let notificationType = 'success';
-    
-    if (quantityAdded === 0) {
-      message = `${getProductName(product)} is already at maximum stock in your cart!`;
-      notificationType = 'warning';
-    } else {
-      // Successfully added items (quantityAdded > 0)
-      message = `${getProductName(product)} added to cart!`;
-      notificationType = 'success';
-    }
+    // Show notification (we'll use a simple success message for now)
+    const message = `${getProductName(product)} ${t('notification.added_to_cart')}`;
     
     setNotification({
       show: true,
       message: message,
       productId: product.id,
-      type: notificationType
+      type: 'success'
     });
 
     // Hide notification after 3 seconds
@@ -180,8 +172,8 @@ export default function CategoryProductsPage() {
     );
   }
 
-  return (
-    <div className="min-h-screen flex flex-col">
+    return (
+    <div className="min-h-screen flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
       <Navbar 
         logoUrl={websiteSettings?.data?.logoUrl || '/SalonyAI-Icon.png'} 
         slug={slug} 
@@ -190,20 +182,20 @@ export default function CategoryProductsPage() {
       
       <main className="flex-1">
         <div className="max-w-7xl mx-auto px-4 py-8">
-          {/* Header */}
-          <div className="mb-8 flex items-center">
-            <button 
-              onClick={() => router.back()}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors cursor-pointer"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Categories</span>
-            </button>
-            <div className="flex-1 text-center">
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">Products</h1>
-              <p className="text-gray-600">Browse our products in this category</p>
+                      {/* Header */}
+            <div className={`mb-8 flex items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <button 
+                onClick={() => router.back()}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors cursor-pointer"
+              >
+                <ArrowLeft className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
+                <span>{t('nav.back_to_products')}</span>
+              </button>
+              <div className="flex-1 text-center">
+                <h1 className="text-3xl font-bold text-gray-800 mb-2">{t('products.title')}</h1>
+                <p className="text-gray-600">{t('products.subtitle')}</p>
+              </div>
             </div>
-          </div>
 
           {/* Notification */}
           {notification.show && (
@@ -223,17 +215,17 @@ export default function CategoryProductsPage() {
             </div>
           )}
 
-          {/* Products Grid */}
-          {products.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">No Products Available</h3>
-              <p className="text-gray-600">We're currently setting up products for this category. Please check back soon!</p>
-            </div>
+                     {/* Products Grid */}
+           {products.length === 0 ? (
+             <div className="text-center py-12">
+               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                 <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                 </svg>
+               </div>
+               <h3 className="text-xl font-semibold text-gray-800 mb-2">{t('products.no_products')}</h3>
+               <p className="text-gray-600">{t('products.no_products_message')}</p>
+             </div>
           ) : (
                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                {products.map((product, index) => (
@@ -241,32 +233,38 @@ export default function CategoryProductsPage() {
                    key={product.id}
                    className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group"
                  >
-                   <div className="aspect-square bg-gray-100 overflow-hidden relative">
-                     {getProductImageUrl(product) && getProductImageUrl(product).trim() !== '' ? (
-                       <Image
-                         src={getProductImageUrl(product)}
-                         alt={getProductName(product)}
-                         fill
-                         className="object-cover group-hover:scale-110 transition-transform duration-500"
-                         sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                         priority={index === 0}
-                         onError={(e) => {
-                           // Hide the image if it fails to load
-                           e.currentTarget.style.display = 'none';
-                         }}
-                       />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-                        <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                        </svg>
-                      </div>
-                    )}
-                    {!getProductImageUrl(product) || getProductImageUrl(product).trim() === '' && (
-                      <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">
-                        No Image
-                      </div>
-                    )}
+                                       <div className="aspect-square bg-gray-100 overflow-hidden relative">
+                      {(() => {
+                        const imageUrl = getProductImageUrl(product);
+                        return imageUrl && imageUrl.trim() !== '' ? (
+                          <Image
+                            src={imageUrl}
+                            alt={getProductName(product)}
+                            fill
+                            className="object-cover group-hover:scale-110 transition-transform duration-500"
+                            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                            priority={index === 0}
+                            onError={(e) => {
+                              // Hide the image if it fails to load
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                            <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                          </div>
+                        );
+                      })()}
+                      {(() => {
+                        const imageUrl = getProductImageUrl(product);
+                        return !imageUrl || imageUrl.trim() === '' ? (
+                          <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">
+                            No Image
+                          </div>
+                        ) : null;
+                      })()}
                     {product.stockQuantity <= 0 && (
                       <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
                         Out of Stock
@@ -282,24 +280,24 @@ export default function CategoryProductsPage() {
                         {getProductDescription(product)}
                       </p>
                     )}
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold text-gray-800">
-                        ${product.price.toFixed(2)}
-                      </span>
-                      <button 
-                        className="flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:scale-105"
-                                                 style={{ 
+                                         <div className={`flex items-center ${isRTL ? 'flex-row-reverse' : 'justify-between'}`}>
+                       <span className="text-2xl font-bold text-gray-800">
+                         ${product.price.toFixed(2)}
+                       </span>
+                       <button 
+                         className="flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:scale-105"
+                                                  style={{ 
                            backgroundColor: product.stockQuantity > 0 ? (themeColor || '#2f27ce') : '#6b7280'
                          }}
-                        disabled={product.stockQuantity <= 0}
-                        onClick={() => handleAddToCart(product)}
-                      >
-                        <ShoppingCart className="w-4 h-4" />
-                        <span className="text-sm font-medium">
-                          {product.stockQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}
-                        </span>
-                      </button>
-                    </div>
+                         disabled={product.stockQuantity <= 0}
+                         onClick={() => handleAddToCart(product)}
+                       >
+                         <ShoppingCart className="w-4 h-4" />
+                         <span className="text-sm font-medium">
+                           {product.stockQuantity > 0 ? t('products.add_to_cart') : t('products.out_of_stock')}
+                         </span>
+                       </button>
+                     </div>
                   </div>
                 </div>
               ))}
@@ -308,17 +306,18 @@ export default function CategoryProductsPage() {
         </div>
       </main>
       
-      <Footer 
-        address_En={websiteSettings?.data?.address_En || "Tripoli, Abu samra, Imad street"}
-        themeColor={themeColor}
-        slug={slug}
-        youtubeLink={websiteSettings?.data?.youtubeLink || "https://youtube.com"}
-        facebookLink={websiteSettings?.data?.facebookLink || "https://facebook.com"}
-        instagramLink={websiteSettings?.data?.instagramLink || "https://instagram.com"}
-        tikTokLink={websiteSettings?.data?.tikTokLink || "https://tiktok.com"}
-        linkedInLink={websiteSettings?.data?.linkedInLink || "https://linkedin.com"}
-        xLink={websiteSettings?.data?.xLink || "https://x.com"}
-      />
+             <Footer 
+         address_En={websiteSettings?.data?.address_En || "Tripoli, Abu samra, Imad street"}
+         address_Ar={websiteSettings?.data?.address_Ar}
+         themeColor={themeColor}
+         slug={slug}
+         youtubeLink={websiteSettings?.data?.youtubeLink || "https://youtube.com"}
+         facebookLink={websiteSettings?.data?.facebookLink || "https://facebook.com"}
+         instagramLink={websiteSettings?.data?.instagramLink || "https://instagram.com"}
+         tikTokLink={websiteSettings?.data?.tikTokLink || "https://tiktok.com"}
+         linkedInLink={websiteSettings?.data?.linkedInLink || "https://linkedin.com"}
+         xLink={websiteSettings?.data?.xLink || "https://x.com"}
+       />
     </div>
   );
 } 

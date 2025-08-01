@@ -10,6 +10,7 @@ export interface NavbarProps {
 
 export interface FooterProps {
   address_En: string;
+  address_Ar?: string;
   themeColor: string;
   slug: string;
   youtubeLink?: string;

@@ -66,10 +66,18 @@ export default function CheckoutPage() {
       return;
     }
 
+    // Add +961 prefix to phone number if it doesn't already have it
+    const formattedPhoneNumber = customer.phoneNumber.startsWith('+961') 
+      ? customer.phoneNumber 
+      : `+961${customer.phoneNumber}`;
+
     try {
       const orderPayload = {
         tenantIdentifier: tenantIdentifier,
-        customer,
+        customer: {
+          ...customer,
+          phoneNumber: formattedPhoneNumber
+        },
         totalAmount: total,
         source: 1, // Website
         items: cartItems.map(item => ({
@@ -171,14 +179,20 @@ export default function CheckoutPage() {
                 </div>
                 <div>
                   <label className="block font-medium mb-2 text-gray-700">Phone Number</label>
-                  <input
-                    type="tel"
-                    required
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    value={customer.phoneNumber}
-                    onChange={e => setCustomer({ ...customer, phoneNumber: e.target.value })}
-                    placeholder="Enter your phone number"
-                  />
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="text-gray-500 text-sm">+961</span>
+                    </div>
+                    <input
+                      type="tel"
+                      required
+                      className="w-full border border-gray-300 rounded-lg pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      value={customer.phoneNumber}
+                      onChange={e => setCustomer({ ...customer, phoneNumber: e.target.value })}
+                      placeholder="70987654"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Enter your phone number without the country code (+961 will be added automatically)</p>
                 </div>
                 <div>
                   <label className="block font-medium mb-2 text-gray-700">Address</label>

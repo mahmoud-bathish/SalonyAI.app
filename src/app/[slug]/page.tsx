@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { getWebsiteSettings } from '@/services/api';
 import type { WebsiteSettingsResponse } from '@/types';
+import { LanguageProvider } from '@/contexts/LanguageContext';
 
 // Dynamic imports to prevent hydration issues
 const Navbar = dynamic(() => import('@/components/Navbar'), { ssr: false });
@@ -91,28 +92,31 @@ export default function SlugPage() {
   const settings = websiteSettings.data;
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar 
-        logoUrl={settings.logoUrl || '/SalonyAI-Icon.png'} 
-        slug={settings.slug} 
-        themeColor={settings.themeColor || '#2f27ce'}
-      />
-      
-      <main className="flex-1">
-        <Categories tenantIdentifier={settings.tenantIdentifier} />
-      </main>
-      
-      <Footer 
-        address_En={settings.address_En}
-        themeColor={settings.themeColor || '#2f27ce'}
-        slug={settings.slug}
-        youtubeLink={settings.youtubeLink}
-        facebookLink={settings.facebookLink}
-        instagramLink={settings.instagramLink}
-        tikTokLink={settings.tikTokLink}
-        linkedInLink={settings.linkedInLink}
-        xLink={settings.xLink}
-      />
-    </div>
+    <LanguageProvider supportedLanguages={settings.supportedLanguages}>
+      <div className="min-h-screen flex flex-col">
+        <Navbar 
+          logoUrl={settings.logoUrl || '/SalonyAI-Icon.png'} 
+          slug={settings.slug} 
+          themeColor={settings.themeColor || '#2f27ce'}
+        />
+        
+        <main className="flex-1">
+          <Categories tenantIdentifier={settings.tenantIdentifier} />
+        </main>
+        
+        <Footer 
+          address_En={settings.address_En}
+          address_Ar={settings.address_Ar}
+          themeColor={settings.themeColor || '#2f27ce'}
+          slug={settings.slug}
+          youtubeLink={settings.youtubeLink}
+          facebookLink={settings.facebookLink}
+          instagramLink={settings.instagramLink}
+          tikTokLink={settings.tikTokLink}
+          linkedInLink={settings.linkedInLink}
+          xLink={settings.xLink}
+        />
+      </div>
+    </LanguageProvider>
   );
 }

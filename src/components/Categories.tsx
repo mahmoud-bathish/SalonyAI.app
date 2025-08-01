@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { getCategories } from '@/services/api';
 import type { Category, CategoriesResponse } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CategoriesProps {
   tenantIdentifier: string;
@@ -12,6 +13,7 @@ interface CategoriesProps {
 
 export default function Categories({ tenantIdentifier }: CategoriesProps) {
   const router = useRouter();
+  const { t, getTranslation, isRTL, selectedLanguage } = useLanguage();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,8 +31,16 @@ export default function Categories({ tenantIdentifier }: CategoriesProps) {
           throw new Error(response.message || 'Failed to load categories');
         }
         
-        // Filter only active categories
-        const activeCategories = response.data.filter(category => category.isActive);
+        // Filter only active categories that have translations for the selected language
+        const activeCategories = response.data.filter(category => {
+          if (!category.isActive) return false;
+          
+          // Check if category has translations for the selected language
+          if (!category.translations || category.translations.length === 0) return false;
+          
+          const hasTranslation = category.translations.some(t => t.languageCode === selectedLanguage);
+          return hasTranslation;
+        });
         setCategories(activeCategories);
       } catch (err) {
         console.error('Categories fetch error:', err);
@@ -47,32 +57,32 @@ export default function Categories({ tenantIdentifier }: CategoriesProps) {
     fetchCategories();
   }, [tenantIdentifier]);
 
-  // Helper function to get category name (prefer English, fallback to first available)
+  // Helper function to get category name using language context
   const getCategoryName = (category: Category): string => {
     if (!category.translations || category.translations.length === 0) {
       return 'Unnamed Category';
     }
     
-    // Try to find English translation (languageCode: 1)
-    const englishTranslation = category.translations.find(t => t.languageCode === 1);
-    if (englishTranslation) {
-      return englishTranslation.name;
+    // Try to find translation for selected language (1 for English, 2 for Arabic)
+    const translation = category.translations.find(t => t.languageCode === selectedLanguage);
+    if (translation) {
+      return translation.name;
     }
     
     // Fallback to first available translation
     return category.translations[0].name;
   };
 
-  // Helper function to get category description
+  // Helper function to get category description using language context
   const getCategoryDescription = (category: Category): string => {
     if (!category.translations || category.translations.length === 0) {
       return '';
     }
     
-    // Try to find English translation (languageCode: 1)
-    const englishTranslation = category.translations.find(t => t.languageCode === 1);
-    if (englishTranslation) {
-      return englishTranslation.description;
+    // Try to find translation for selected language (1 for English, 2 for Arabic)
+    const translation = category.translations.find(t => t.languageCode === selectedLanguage);
+    if (translation) {
+      return translation.description;
     }
     
     // Fallback to first available translation
@@ -89,8 +99,8 @@ export default function Categories({ tenantIdentifier }: CategoriesProps) {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Our Categories</h2>
+      <div className="max-w-7xl mx-auto px-4 py-8" dir={isRTL ? 'rtl' : 'ltr'}>
+        <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">{t('categories.title')}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {[...Array(4)].map((_, index) => (
             <div key={index} className="bg-white rounded-xl shadow-lg animate-pulse">
@@ -108,21 +118,21 @@ export default function Categories({ tenantIdentifier }: CategoriesProps) {
 
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Our Categories</h2>
+      <div className="max-w-7xl mx-auto px-4 py-8" dir={isRTL ? 'rtl' : 'ltr'}>
+        <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">{t('categories.title')}</h2>
         <div className="text-center py-12">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">Unable to Load Categories</h3>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">{t('error.loading')}</h3>
           <p className="text-gray-600 mb-6 max-w-md mx-auto">{error}</p>
           <button 
             onClick={() => window.location.reload()} 
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium cursor-pointer"
           >
-            Try Again
+            {t('error.general')}
           </button>
         </div>
       </div>
@@ -131,27 +141,27 @@ export default function Categories({ tenantIdentifier }: CategoriesProps) {
 
   if (categories.length === 0) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Our Categories</h2>
+      <div className="max-w-7xl mx-auto px-4 py-8" dir={isRTL ? 'rtl' : 'ltr'}>
+        <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">{t('categories.title')}</h2>
         <div className="text-center py-12">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">No Categories Available</h3>
-          <p className="text-gray-600">We're currently setting up our product categories. Please check back soon!</p>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">{t('categories.no_categories')}</h3>
+          <p className="text-gray-600">{t('categories.no_categories_message')}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-8" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="text-center mb-12">
-        <h2 className="text-3xl font-bold text-gray-800 mb-4">Our Categories</h2>
+        <h2 className="text-3xl font-bold text-gray-800 mb-4">{t('categories.title')}</h2>
         <p className="text-gray-600 max-w-2xl mx-auto">
-          Explore our carefully curated selection of products organized into categories for your convenience
+          {t('categories.subtitle')}
         </p>
       </div>
       
@@ -189,14 +199,14 @@ export default function Categories({ tenantIdentifier }: CategoriesProps) {
                   {getCategoryDescription(category)}
                 </p>
               )}
-              <div className="flex items-center justify-end">
-                <div className="flex items-center text-blue-600 group-hover:text-blue-700 transition-colors">
-                  <span className="text-sm font-medium mr-1">Explore</span>
-                  <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </div>
+              <div className={`flex items-center justify-end`}>
+                   <div className={`flex items-center text-blue-600 group-hover:text-blue-700 transition-colors `}>
+                     <span className={`text-sm font-medium ${isRTL ? 'ml-1' : 'mr-1'}`}>{t('categories.explore')}</span>
+                     <svg className={`w-4 h-4 transform transition-transform ${isRTL ? 'group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isRTL ? "M15 19l-7-7 7-7" : "M9 5l7 7-7 7"} />
+                     </svg>
+                   </div>
+                 </div>
             </div>
           </div>
         ))}
