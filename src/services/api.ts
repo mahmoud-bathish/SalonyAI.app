@@ -1,7 +1,7 @@
 import type { WebsiteSettingsResponse, CategoriesResponse, ProductsResponse } from '@/types';
 
 const API_BASE_URL = 'https://api.salonyai.com/api';
-const TENANT_IDENTIFIER = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
+const HARDCODED_TENANT_IDENTIFIER = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
 
 export async function getWebsiteSettings(slug: string): Promise<WebsiteSettingsResponse> {
   try {
@@ -9,7 +9,7 @@ export async function getWebsiteSettings(slug: string): Promise<WebsiteSettingsR
       method: 'GET',
       headers: {
         'accept': 'text/plain',
-        'x-tenant-identifier': TENANT_IDENTIFIER,
+        'x-tenant-identifier': HARDCODED_TENANT_IDENTIFIER,
       },
     });
 

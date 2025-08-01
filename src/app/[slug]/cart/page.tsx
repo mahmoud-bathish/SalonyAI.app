@@ -79,34 +79,32 @@ export default function CartPage() {
       <main className="flex-1">
         <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Header */}
-          <div className="mb-8">
-            <button 
-              onClick={() => router.back()}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors mb-4 cursor-pointer"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back</span>
-            </button>
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-800 mb-2">Shopping Cart</h1>
-                <p className="text-gray-600">
-                  {totalItems === 0 
-                    ? 'Your cart is empty' 
-                    : `${totalItems} item${totalItems === 1 ? '' : 's'} in your cart`
-                  }
-                </p>
-              </div>
-              {cartItems.length > 0 && (
-                <button 
-                  onClick={clearCart}
-                  className="flex items-center gap-2 px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  <span>Clear Cart</span>
-                </button>
-              )}
+          <div className="mb-8 flex items-center">
+                         <button 
+               onClick={() => router.push(`/${slug}`)}
+               className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors cursor-pointer"
+             >
+               <ArrowLeft className="w-4 h-4" />
+               <span>Back to Products</span>
+             </button>
+            <div className="flex-1 text-center">
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">Shopping Cart</h1>
+              <p className="text-gray-600">
+                {totalItems === 0 
+                  ? 'Your cart is empty' 
+                  : `${totalItems} item${totalItems === 1 ? '' : 's'} in your cart`
+                }
+              </p>
             </div>
+            {cartItems.length > 0 && (
+              <button 
+                onClick={clearCart}
+                className="flex items-center gap-2 px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Clear Cart</span>
+              </button>
+            )}
           </div>
 
           {/* Cart Items */}
@@ -135,14 +133,14 @@ export default function CartPage() {
                         className="bg-white rounded-xl shadow-lg p-6 flex items-center gap-4"
                       >
                       {/* Product Image */}
-                      <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                      <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative">
                         {item.imageUrl && item.imageUrl.trim() !== '' ? (
                           <Image
                             src={item.imageUrl}
                             alt={item.name}
-                            width={80}
-                            height={80}
-                            className="object-cover w-full h-full"
+                            fill
+                            className="object-cover"
+                            sizes="80px"
                             onError={(e) => {
                               e.currentTarget.style.display = 'none';
                             }}

@@ -52,12 +52,12 @@ export default function CategoryProductsPage() {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      if (!mounted || !categoryId) return;
+      if (!mounted || !categoryId || !websiteSettings?.data?.tenantIdentifier) return;
       
       try {
         setLoading(true);
         setError(null);
-        const response: ProductsResponse = await getProducts('199934e6-6a34-498c-8957-d1ec3666adbd', parseInt(categoryId), 0, 20);
+        const response: ProductsResponse = await getProducts(websiteSettings.data.tenantIdentifier, parseInt(categoryId), 0, 20);
         
         if (!response.isSuccessful) {
           throw new Error(response.message || 'Failed to load products');
@@ -79,7 +79,7 @@ export default function CategoryProductsPage() {
     };
 
     fetchProducts();
-  }, [categoryId, mounted]);
+  }, [categoryId, mounted, websiteSettings?.data?.tenantIdentifier]);
 
   // Helper function to get product image URL
   const getProductImageUrl = (product: Product): string | null => {
@@ -191,16 +191,18 @@ export default function CategoryProductsPage() {
       <main className="flex-1">
         <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Header */}
-          <div className="mb-8">
+          <div className="mb-8 flex items-center">
             <button 
               onClick={() => router.back()}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors mb-4 cursor-pointer"
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back to Categories</span>
             </button>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Products</h1>
-            <p className="text-gray-600">Browse our products in this category</p>
+            <div className="flex-1 text-center">
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">Products</h1>
+              <p className="text-gray-600">Browse our products in this category</p>
+            </div>
           </div>
 
           {/* Notification */}
